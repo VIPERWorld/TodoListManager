@@ -46,29 +46,26 @@ void tree_widget_item_to_ptree(const QTreeWidgetItem* item, ptree& output)
     if ( item->checkState(0) == Qt::Checked )
         output.put("checked", true);
 
+    ptree children;
     for ( int i = 0; i < item->childCount(); i++ )
     {
         ptree child;
         tree_widget_item_to_ptree(item->child(i), child);
-        output.add_child("child", child);
+        children.push_back({"", child});
     }
+    if ( !children.empty() )
+        output.add_child("children", children);
 }
 
 void tree_widget_item_from_ptree(QTreeWidgetItem* item, const ptree& input)
 {
-    for ( const auto& child : input )
-    {
-        if ( child.first == "data" )
-        {
-            item->setData(item->columnCount(), Qt::EditRole, QString::fromStdString(child.second.data()));
-        }
-        else if ( child.first == "child" )
-        {
-            tree_widget_item_from_ptree(new QTreeWidgetItem(item), child.second);
-        }
-    }
-
+    item->setData(0, Qt::EditRole, QString::fromStdString(input.get("data", "")));
     item->setCheckState(0, input.get("checked", false) ? Qt::Checked : Qt::Unchecked);
+
+    for ( const auto& child : input.get_child("children", {}) )
+    {
+        tree_widget_item_from_ptree(new QTreeWidgetItem(item), child.second);
+    }
 }
 
 Window::Window(QWidget* parent)
