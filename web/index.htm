@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>tlim - Web</title>
+    <script src="http://code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="https://raw.githubusercontent.com/ilikenwf/nestedSortable/2.0alpha/jquery.mjs.nestedSortable.js"></script>
+    <script>
+        function add_item(text, parent)
+        {
+            if ( add_item.id == undefined )
+                add_item.id = 0;
+            var element_id = "item_"+add_item.id;
+            add_item.id++;
+            var li = $("<li id='"+element_id+"'><div>"+
+                "<input type='checkbox' id='"+element_id+"_checkbox' /> "+
+                "<span id='"+element_id+"_data'>"+text+"</span>"+
+                "</div></li>");
+            parent.append(li);
+            $("#tree_view").nestedSortable('refresh');
+        }
+
+        function to_hierarchy(element, output)
+        {
+            output.children = [];
+            var childn = 0;
+            element.children('li').each(function() {
+                var child = output.children[childn] = {};
+                childn++;
+                to_hierarchy_full($(this), child);
+            });
+        }
+
+
+        function to_hierarchy_full(element, output)
+        {
+            var id = element.attr("id");
+            
+            output.checked = $("#"+id+"_checkbox").prop('checked');
+            output.data = $("#"+id+"_data").text();
+
+            var ul = element.children('ul');
+            if ( ul.size() != 0 )
+                to_hierarchy($(ul[0]), output);
+        }
+
+        $(document).ready(function()
+        {
+            $('#tree_view').nestedSortable({
+                listType: "ul",
+            });
+
+            $("#button_add").click(function(e)
+            {
+                var text = $("#text_new").val();
+                $("#text_new").val("");
+                add_item(text, $("#tree_view"));
+            });
+
+            $("#button_dump").click(function()
+            {
+                var object = {};
+                to_hierarchy($("#tree_view"), object);
+                console.log(object);
+            })
+        });
+    </script>
+</head>
+<body>
+    <h1>Todo List Manager</h1>
+    <div id="main">
+        <ul id="tree_view"></ul>
+        <form id="form_insert">
+            <input type="text" id="text_new"/>
+            <input type="button" id="button_add" value="Add"></input>
+            <input type="button" id="button_dump" value="Dump"></input>
+        </form>
+
+    </div>
+</body>
+</html>
